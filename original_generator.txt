@@ -1,0 +1,33 @@
+generator code:
+def generator(input, filter, padding, strides, kernel, weights, weights_path='/notebooks/saved_model/mask_generator.h5'):
+    x = input
+    con1, skip1 = encoder(x, filter, padding = padding, strides = strides,
+                        kernel = kernel, activation = 'LeakyReLU')
+    con2, skip2 = encoder(con1, filter*2, padding = padding, strides = strides,
+                        kernel = kernel, activation = 'LeakyReLU')
+    con3, skip3 = encoder(con2, filter*4, padding = padding, strides = strides,
+                        kernel = kernel, activation = 'LeakyReLU')
+    con4, skip4 = encoder(con3, filter*8, padding = padding, strides = strides,
+                        kernel = kernel, activation = 'LeakyReLU')
+    con5, skip5 = encoder(con4, filter*16, padding = padding, strides = strides,
+                        kernel = kernel, activation = 'LeakyReLU')
+    
+    deco1 = decoder(con5, filter*16, skip5, padding = padding, strides = strides,
+                  kernel = kernel, activation = 'swish')
+    deco2 = decoder(deco1, filter*8, skip4, padding = padding, strides = strides,
+                  kernel = kernel, activation = 'swish')
+    deco3 = decoder(deco2, filter*4, skip3, padding = padding, strides = strides,
+                  kernel = kernel, activation = 'swish')
+    deco4 = decoder(deco3, filter*2, skip2, padding = padding, strides = strides,
+                  kernel = kernel, activation = 'swish')
+    deco5 = decoder(deco4, filter, skip1, padding = padding, strides = strides,
+                  kernel = kernel, activation = 'swish')
+    output = layers.Conv2DTranspose(1, kernel_size = kernel, strides = strides,
+                                  padding = padding, activation = 'sigmoid')(deco5)
+    
+    generator = models.Model(inputs = input, outputs = output, name = 'generator')
+    
+    if weights != None:
+        generator.load_weights(weights_path)
+    generator.summary()
+    return generator 	
